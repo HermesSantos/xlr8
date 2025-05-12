@@ -63,6 +63,7 @@
       background-color: #00b76a;
     }
 
+
     #wordDisplay {
       font-size: 3rem;
       font-weight: bold;
@@ -73,6 +74,42 @@
       margin-top: 2rem;
       color: #FFEB3B;
     }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      backdrop-filter: blur(3px);
+    }
+
+    .modal-content {
+      background-color: #161B22;
+      margin: 10% auto;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      color: #fff;
+      box-shadow: 0 0 10px #00DC82;
+      text-align: left;
+    }
+
+    .close-btn {
+      color: #00DC82;
+      float: right;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: #00b76a;
+    }
+
     </style>
   </head>
   <body>
@@ -87,21 +124,77 @@
       <br>
       <button onclick="startReading()">Começar</button>
       <button onclick="rewind()">Voltar 10 palavras</button>
+      <button onclick="toggleConfig()">⚙️ Configurações</button>
     </div>
 
-    <div id="wordDisplay">---</div>
+
+    <!-- Modal de Configurações -->
+    <div id="configModal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="toggleConfig()">&times;</span>
+        <h2>Configurações</h2>
+
+        <label>Cor da palavra:
+          <input type="color" id="colorPicker" value="#00DC82">
+        </label>
+        <br><br>
+
+        <label>Tamanho da fonte:
+          <input type="range" id="fontSizeSlider" min="20" max="100" value="48">
+          <span id="fontSizeValue">48</span>px
+        </label>
+        <br><br>
+
+        <label>
+          <input type="checkbox" id="showTimer"> Mostrar cronômetro
+        </label>
+      </div>
+    </div>
+
+
+    <!-- Palavra e Timer -->
+    <div id="wordDisplay" style="font-size: 48px; color: #00DC82; margin-top: 2rem;">---</div>
+    <div id="timerDisplay" style="font-size: 1rem; margin-top: 0.5rem; display: none;">00:00</div>
 
     <script>
     let words = [];
     let index = 0;
     let interval;
+    let timerInterval;
+    let seconds = 0;
+    window.onclick = function(event) {
+      const modal = document.getElementById('configModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    }
 
     function startReading() {
       const text = document.getElementById('inputText').value;
       const speed = parseInt(document.getElementById('speed').value);
+      const showTimer = document.getElementById('showTimer').checked;
+      const fontSize = document.getElementById('fontSizeSlider').value + "px";
+      const color = document.getElementById('colorPicker').value;
+
       words = text.split(/\s+/);
-      index = Math.max(0, index); // garantir que não seja negativo
+      index = Math.max(0, index);
       clearInterval(interval);
+      clearInterval(timerInterval);
+
+      document.getElementById('wordDisplay').style.fontSize = fontSize;
+      document.getElementById('wordDisplay').style.color = color;
+
+      if (showTimer) {
+        seconds = 0;
+        document.getElementById('timerDisplay').style.display = 'block';
+        updateTimer();
+        timerInterval = setInterval(() => {
+          seconds++;
+          updateTimer();
+        }, 1000);
+      } else {
+        document.getElementById('timerDisplay').style.display = 'none';
+      }
 
       const delay = 60000 / speed;
       interval = setInterval(() => {
@@ -110,6 +203,7 @@
           index++;
         } else {
           clearInterval(interval);
+          clearInterval(timerInterval);
           document.getElementById('wordDisplay').textContent = "Fim!";
         }
       }, delay);
@@ -118,11 +212,22 @@
     function rewind() {
       index = Math.max(0, index - 10);
     }
-    function restartReading () {
-      index = 0
+
+    function toggleConfig() {
+      const modal = document.getElementById('configModal');
+      modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
     }
+
+    function updateTimer() {
+      const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const secs = (seconds % 60).toString().padStart(2, '0');
+      document.getElementById('timerDisplay').textContent = `${minutes}:${secs}`;
+    }
+
+    // Mostrar valor do tamanho da fonte ao arrastar o controle
+    document.getElementById('fontSizeSlider').addEventListener('input', (e) => {
+      document.getElementById('fontSizeValue').textContent = e.target.value;
+    });
     </script>
 
   </body>
-</html>
-
